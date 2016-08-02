@@ -89,6 +89,9 @@ var EventHandlers = {
     var swipeDirection = this.swipeDirection(this.state.touchObject);
     var touchSwipeLength = touchObject.swipeLength;
 
+    if (!this.props.vertical && swipeDirection === 'vertical') {
+      return;
+    }
     if (this.props.infinite === false) {
       if ((currentSlide === 0 && swipeDirection === 'right') || (currentSlide + 1 >= dotCount && swipeDirection === 'left')) {
         touchSwipeLength = touchObject.swipeLength * this.props.edgeFriction;
