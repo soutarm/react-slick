@@ -14,6 +14,7 @@ import {PrevArrow, NextArrow} from './arrows';
 export var InnerSlider = React.createClass({
   mixins: [HelpersMixin, EventHandlersMixin],
   getInitialState: function () {
+    initialState.currentSlide = this.props.initialSlide;
     return initialState;
   },
   getDefaultProps: function () {
