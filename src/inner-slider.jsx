@@ -28,7 +28,7 @@ export var InnerSlider = React.createClass({
     });
     var lazyLoadedList = [];
     for (var i = 0; i < React.Children.count(this.props.children); i++) {
-      if (i >= this.state.currentSlide && i < this.state.currentSlide + this.props.slidesToShow) {
+      if (i >= this.state.currentSlide && i < this.state.currentSlide + this.props.slidesToShow + this.props.slidesToPreload) {
         lazyLoadedList.push(i);
       }
     }
@@ -91,6 +91,7 @@ export var InnerSlider = React.createClass({
       rtl: this.props.rtl,
       slideWidth: this.state.slideWidth,
       slidesToShow: this.props.slidesToShow,
+      slidesToPreload: this.props.slidesToPreload,
       slideCount: this.state.slideCount,
       trackStyle: this.state.trackStyle,
       variableWidth: this.props.variableWidth

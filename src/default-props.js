@@ -23,6 +23,7 @@ var defaultProps = {
     rtl: false,
     slide: 'div',
     slidesToShow: 1,
+    slidesToPreload: 1,
     slidesToScroll: 1,
     speed: 500,
     swipe: true,
