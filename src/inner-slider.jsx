@@ -14,6 +14,7 @@ import {PrevArrow, NextArrow} from './arrows';
 export var InnerSlider = React.createClass({
   mixins: [HelpersMixin, EventHandlersMixin],
   getInitialState: function () {
+    initialState.currentSlide = this.props.initialSlide;
     return initialState;
   },
   getDefaultProps: function () {
@@ -28,7 +29,7 @@ export var InnerSlider = React.createClass({
     });
     var lazyLoadedList = [];
     for (var i = 0; i < React.Children.count(this.props.children); i++) {
-      if (i >= this.state.currentSlide && i < this.state.currentSlide + this.props.slidesToShow) {
+      if (i >= this.state.currentSlide && i < this.state.currentSlide + this.props.slidesToShow + this.props.slidesToPreload) {
         lazyLoadedList.push(i);
       }
     }
@@ -91,14 +92,16 @@ export var InnerSlider = React.createClass({
       rtl: this.props.rtl,
       slideWidth: this.state.slideWidth,
       slidesToShow: this.props.slidesToShow,
+      slidesToPreload: this.props.slidesToPreload,
       slideCount: this.state.slideCount,
       trackStyle: this.state.trackStyle,
-      variableWidth: this.props.variableWidth
+      variableWidth: this.props.variableWidth,
+      preloadContent: this.props.preloadContent
     };
 
     var dots;
 
-    if (this.props.dots === true && this.state.slideCount > this.props.slidesToShow) {
+    if (this.props.dots === true && this.state.slideCount >= this.props.slidesToShow) {
       var dotProps = {
         dotsClass: this.props.dotsClass,
         slideCount: this.state.slideCount,

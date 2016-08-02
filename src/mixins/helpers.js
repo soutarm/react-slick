@@ -42,12 +42,14 @@ var helpers = {
     var listWidth = this.getWidth(ReactDOM.findDOMNode(this.refs.list));
     var trackWidth = this.getWidth(ReactDOM.findDOMNode(this.refs.track));
     var slideWidth = this.getWidth(ReactDOM.findDOMNode(this))/props.slidesToShow;
+    var currentSlide = props.rtl ? slideCount - 1 - props.initialSlide : props.initialSlide;
 
     this.setState({
       slideCount: slideCount,
       slideWidth: slideWidth,
       listWidth: listWidth,
-      trackWidth: trackWidth
+      trackWidth: trackWidth,
+      currentSlide: currentSlide,
     }, function () {
 
       var targetLeft = getTrackLeft(assign({
@@ -74,7 +76,6 @@ var helpers = {
   },
   slideHandler: function (index) {
     // Functionality of animateSlide and postSlide is merged into this function
-    // console.log('slideHandler', index);
     var targetSlide, currentSlide;
     var targetLeft, currentLeft;
     var callback;
@@ -95,10 +96,19 @@ var helpers = {
         targetSlide = index;
       }
 
-      if (this.props.lazyLoad && this.state.lazyLoadedList.indexOf(targetSlide) < 0) {
+      if (this.props.lazyLoad) {
+        var slidesToLoad = [];
+        for (var i = targetSlide; i < targetSlide + this.props.slidesToShow + this.props.slidesToPreload; i++ ) {
+          var checkSlide = i < 0 ? this.state.slideCount + i : i;
+          if (this.state.lazyLoadedList.indexOf(checkSlide) < 0) {
+            slidesToLoad.push(checkSlide);
+          }
+        }
+        if (slidesToLoad.length > 0) {
         this.setState({
-          lazyLoadedList: this.state.lazyLoadedList.concat(targetSlide)
+            lazyLoadedList: this.state.lazyLoadedList.concat(slidesToLoad)
         });
+        }
       }
 
       callback = () => {
@@ -166,15 +176,14 @@ var helpers = {
     }
 
     if (this.props.lazyLoad) {
-      var loaded = true;
       var slidesToLoad = [];
-      for (var i = targetSlide; i < targetSlide + this.props.slidesToShow; i++ ) {
-        loaded = loaded && (this.state.lazyLoadedList.indexOf(i) >= 0);
-        if (!loaded) {
-          slidesToLoad.push(i);
+      for (var i = targetSlide; i < targetSlide + this.props.slidesToShow + this.props.slidesToPreload; i++ ) {
+        var checkSlide = i < 0 ? this.state.slideCount + i : i;
+        if (this.state.lazyLoadedList.indexOf(checkSlide) < 0) {
+          slidesToLoad.push(checkSlide);
         }
       }
-      if (!loaded) {
+      if (slidesToLoad.length > 0) {
         this.setState({
           lazyLoadedList: this.state.lazyLoadedList.concat(slidesToLoad)
         });
