@@ -94,7 +94,8 @@ export var InnerSlider = React.createClass({
       slidesToPreload: this.props.slidesToPreload,
       slideCount: this.state.slideCount,
       trackStyle: this.state.trackStyle,
-      variableWidth: this.props.variableWidth
+      variableWidth: this.props.variableWidth,
+      preloadContent: this.props.preloadContent
     };
 
     var dots;
