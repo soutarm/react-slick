@@ -141,18 +141,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else {
 	      settings = (0, _objectAssign2.default)({}, _defaultProps2.default, this.props);
 	    }
+	    var children = this.props.children;
+	    if (!Array.isArray(children)) {
+	      children = [children];
+	    }
+
+	    // Children may contain false or null, so we should filter them
+	    children = children.filter(function (child) {
+	      return !!child;
+	    });
 	    if (settings === 'unslick') {
 	      // if 'unslick' responsive breakpoint setting used, just return the <Slider> tag nested HTML
 	      return _react2.default.createElement(
 	        'div',
 	        null,
-	        this.props.children
+	        children
 	      );
 	    } else {
 	      return _react2.default.createElement(
 	        _innerSlider.InnerSlider,
 	        settings,
-	        this.props.children
+	        children
 	      );
 	    }
 	  }
@@ -214,6 +223,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  mixins: [_helpers2.default, _eventHandlers2.default],
 	  getInitialState: function getInitialState() {
+	    _initialState2.default.currentSlide = this.props.initialSlide;
 	    return _initialState2.default;
 	  },
 	  getDefaultProps: function getDefaultProps() {
@@ -228,7 +238,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    });
 	    var lazyLoadedList = [];
 	    for (var i = 0; i < _react2.default.Children.count(this.props.children); i++) {
-	      if (i >= this.state.currentSlide && i < this.state.currentSlide + this.props.slidesToShow) {
+	      if (i >= this.state.currentSlide && i < this.state.currentSlide + this.props.slidesToShow + this.props.slidesToPreload) {
 	        lazyLoadedList.push(i);
 	      }
 	    }
@@ -291,14 +301,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	      rtl: this.props.rtl,
 	      slideWidth: this.state.slideWidth,
 	      slidesToShow: this.props.slidesToShow,
+	      slidesToPreload: this.props.slidesToPreload,
 	      slideCount: this.state.slideCount,
 	      trackStyle: this.state.trackStyle,
-	      variableWidth: this.props.variableWidth
+	      variableWidth: this.props.variableWidth,
+	      preloadContent: this.props.preloadContent
 	    };
 
 	    var dots;
 
-	    if (this.props.dots === true && this.state.slideCount > this.props.slidesToShow) {
+	    if (this.props.dots === true && this.state.slideCount >= this.props.slidesToShow) {
 	      var dotProps = {
 	        dotsClass: this.props.dotsClass,
 	        slideCount: this.state.slideCount,
@@ -426,6 +438,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    posY = e.touches !== undefined ? e.touches[0].pageY : e.clientY;
 	    this.setState({
 	      dragging: true,
+	      vertical: false,
 	      touchObject: {
 	        startX: posX,
 	        startY: posY,
@@ -439,6 +452,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      return;
 	    }
 	    if (this.state.animating) {
+	      return;
+	    }
+	    if (this.state.vertical) {
 	      return;
 	    }
 	    var swipeLeft;
@@ -484,6 +500,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    });
 
 	    if (Math.abs(touchObject.curX - touchObject.startX) < Math.abs(touchObject.curY - touchObject.startY) * 0.8) {
+	      this.setState({ vertical: true });
 	      return;
 	    }
 	    if (touchObject.swipeLength > 4) {
@@ -501,6 +518,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    // reset the state of touch related state variables.
 	    this.setState({
 	      dragging: false,
+	      vertical: false,
 	      edgeDragged: false,
 	      swiped: false,
 	      swipeLeft: null,
@@ -738,12 +756,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var listWidth = this.getWidth(_reactDom2.default.findDOMNode(this.refs.list));
 	    var trackWidth = this.getWidth(_reactDom2.default.findDOMNode(this.refs.track));
 	    var slideWidth = this.getWidth(_reactDom2.default.findDOMNode(this)) / props.slidesToShow;
+	    var currentSlide = props.rtl ? slideCount - 1 - props.initialSlide : props.initialSlide;
 
 	    this.setState({
 	      slideCount: slideCount,
 	      slideWidth: slideWidth,
 	      listWidth: listWidth,
-	      trackWidth: trackWidth
+	      trackWidth: trackWidth,
+	      currentSlide: currentSlide
 	    }, function () {
 
 	      var targetLeft = (0, _trackHelper.getTrackLeft)((0, _objectAssign2.default)({
@@ -772,7 +792,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var _this = this;
 
 	    // Functionality of animateSlide and postSlide is merged into this function
-	    // console.log('slideHandler', index);
 	    var targetSlide, currentSlide;
 	    var targetLeft, currentLeft;
 	    var _callback2;
@@ -793,10 +812,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	        targetSlide = index;
 	      }
 
-	      if (this.props.lazyLoad && this.state.lazyLoadedList.indexOf(targetSlide) < 0) {
-	        this.setState({
-	          lazyLoadedList: this.state.lazyLoadedList.concat(targetSlide)
-	        });
+	      if (this.props.lazyLoad) {
+	        var slidesToLoad = [];
+	        for (var i = targetSlide; i < targetSlide + this.props.slidesToShow + this.props.slidesToPreload; i++) {
+	          var checkSlide = i < 0 ? this.state.slideCount + i : i;
+	          if (this.state.lazyLoadedList.indexOf(checkSlide) < 0) {
+	            slidesToLoad.push(checkSlide);
+	          }
+	        }
+	        if (slidesToLoad.length > 0) {
+	          this.setState({
+	            lazyLoadedList: this.state.lazyLoadedList.concat(slidesToLoad)
+	          });
+	        }
 	      }
 
 	      _callback2 = function callback() {
@@ -804,7 +832,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          animating: false
 	        });
 	        if (_this.props.afterChange) {
-	          _this.props.afterChange(currentSlide);
+	          _this.props.afterChange(targetSlide);
 	        }
 	        _ReactTransitionEvents2.default.removeEndEventListener(_reactDom2.default.findDOMNode(_this.refs.track).children[currentSlide], _callback2);
 	      };
@@ -817,7 +845,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      });
 
 	      if (this.props.beforeChange) {
-	        this.props.beforeChange(this.state.currentSlide, currentSlide);
+	        this.props.beforeChange(this.state.currentSlide, targetSlide);
 	      }
 
 	      this.autoPlay();
@@ -864,15 +892,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    if (this.props.lazyLoad) {
-	      var loaded = true;
 	      var slidesToLoad = [];
-	      for (var i = targetSlide; i < targetSlide + this.props.slidesToShow; i++) {
-	        loaded = loaded && this.state.lazyLoadedList.indexOf(i) >= 0;
-	        if (!loaded) {
-	          slidesToLoad.push(i);
+	      for (var i = targetSlide; i < targetSlide + this.props.slidesToShow + this.props.slidesToPreload; i++) {
+	        var checkSlide = i < 0 ? this.state.slideCount + i : i;
+	        if (this.state.lazyLoadedList.indexOf(checkSlide) < 0) {
+	          slidesToLoad.push(checkSlide);
 	        }
 	      }
-	      if (!loaded) {
+	      if (slidesToLoad.length > 0) {
 	        this.setState({
 	          lazyLoadedList: this.state.lazyLoadedList.concat(slidesToLoad)
 	        });
@@ -1366,6 +1393,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    rtl: false,
 	    slide: 'div',
 	    slidesToShow: 1,
+	    slidesToPreload: 1,
 	    slidesToScroll: 1,
 	    speed: 500,
 	    swipe: true,
@@ -1383,7 +1411,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    swipeEvent: null,
 	    // nextArrow, prevArrow are react componets
 	    nextArrow: null,
-	    prevArrow: null
+	    prevArrow: null,
+	    preloadContent: null
 	};
 
 	module.exports = defaultProps;
@@ -1528,7 +1557,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!spec.lazyLoad | (spec.lazyLoad && spec.lazyLoadedList.indexOf(index) >= 0)) {
 	      child = elem;
 	    } else {
-	      child = _react2.default.createElement('div', null);
+	      child = _react2.default.createElement(
+	        'div',
+	        null,
+	        spec.preloadContent
+	      );
 	    }
 	    var childStyle = getSlideStyle((0, _objectAssign2.default)({}, spec, { index: index }));
 	    var slickClasses = getSlideClasses((0, _objectAssign2.default)({ index: index }, spec));
