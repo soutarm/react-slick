@@ -55,6 +55,7 @@ var EventHandlers = {
     posY = (e.touches !== undefined) ? e.touches[0].pageY : e.clientY;
     this.setState({
       dragging: true,
+      vertical: false,
       touchObject: {
         startX: posX,
         startY: posY,
@@ -68,6 +69,9 @@ var EventHandlers = {
       return;
     }
     if (this.state.animating) {
+      return;
+    }
+    if (this.state.vertical) {
       return;
     }
     var swipeLeft;
@@ -89,9 +93,6 @@ var EventHandlers = {
     var swipeDirection = this.swipeDirection(this.state.touchObject);
     var touchSwipeLength = touchObject.swipeLength;
 
-    if (!this.props.vertical && swipeDirection === 'vertical') {
-      return;
-    }
     if (this.props.infinite === false) {
       if ((currentSlide === 0 && swipeDirection === 'right') || (currentSlide + 1 >= dotCount && swipeDirection === 'left')) {
         touchSwipeLength = touchObject.swipeLength * this.props.edgeFriction;
@@ -108,6 +109,11 @@ var EventHandlers = {
       this.setState({ swiped: true });
     }
 
+    if (Math.abs(touchObject.curX - touchObject.startX) < Math.abs(touchObject.curY - touchObject.startY) * 0.8) {
+      this.setState({ vertical: true });
+      return;
+    }
+    
     swipeLeft = curLeft + touchSwipeLength * positionOffset;
     this.setState({
       touchObject: touchObject,
@@ -115,8 +121,6 @@ var EventHandlers = {
       trackStyle: getTrackCSS(assign({left: swipeLeft}, this.props, this.state))
     });
 
-    if (Math.abs(touchObject.curX - touchObject.startX) < Math.abs(touchObject.curY - touchObject.startY) * 0.8)
-      { return; }
     if (touchObject.swipeLength > 4) {
       e.preventDefault();
     }
@@ -132,6 +136,7 @@ var EventHandlers = {
     // reset the state of touch related state variables.
     this.setState({
       dragging: false,
+      vertical: false,
       edgeDragged: false,
       swiped: false,
       swipeLeft: null,
