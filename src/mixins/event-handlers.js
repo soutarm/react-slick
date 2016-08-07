@@ -109,6 +109,11 @@ var EventHandlers = {
       this.setState({ swiped: true });
     }
 
+    if (Math.abs(touchObject.curX - touchObject.startX) < Math.abs(touchObject.curY - touchObject.startY) * 0.8) {
+      this.setState({ vertical: true });
+      return;
+    }
+    
     swipeLeft = curLeft + touchSwipeLength * positionOffset;
     this.setState({
       touchObject: touchObject,
@@ -116,10 +121,6 @@ var EventHandlers = {
       trackStyle: getTrackCSS(assign({left: swipeLeft}, this.props, this.state))
     });
 
-    if (Math.abs(touchObject.curX - touchObject.startX) < Math.abs(touchObject.curY - touchObject.startY) * 0.8) {
-      this.setState({ vertical: true });
-      return;
-    }
     if (touchObject.swipeLength > 4) {
       e.preventDefault();
     }
