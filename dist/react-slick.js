@@ -141,6 +141,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else {
 	      settings = (0, _objectAssign2.default)({}, _defaultProps2.default, this.props);
 	    }
+
 	    var children = this.props.children;
 	    if (!Array.isArray(children)) {
 	      children = [children];
@@ -150,6 +151,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    children = children.filter(function (child) {
 	      return !!child;
 	    });
+
 	    if (settings === 'unslick') {
 	      // if 'unslick' responsive breakpoint setting used, just return the <Slider> tag nested HTML
 	      return _react2.default.createElement(
@@ -236,16 +238,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.setState({
 	      mounted: true
 	    });
-	    var lazyLoadedList = [];
-	    for (var i = 0; i < _react2.default.Children.count(this.props.children); i++) {
-	      if (i >= this.state.currentSlide && i < this.state.currentSlide + this.props.slidesToShow + this.props.slidesToPreload) {
-	        lazyLoadedList.push(i);
-	      }
-	    }
 
-	    if (this.props.lazyLoad && this.state.lazyLoadedList.length === 0) {
+	    if (this.props.lazyLoad) {
 	      this.setState({
-	        lazyLoadedList: lazyLoadedList
+	        lazyLoadedList: this._getLazyLoadList(this.props.initialSlide)
 	      });
 	    }
 	  },
@@ -270,7 +266,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  },
 	  componentWillReceiveProps: function componentWillReceiveProps(nextProps) {
-	    if (this.props.slickGoTo != nextProps.slickGoTo) {
+	    if (this.props.slickGoTo !== nextProps.slickGoTo) {
 	      this.changeSlide({
 	        message: 'index',
 	        index: nextProps.slickGoTo,
@@ -301,7 +297,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	      rtl: this.props.rtl,
 	      slideWidth: this.state.slideWidth,
 	      slidesToShow: this.props.slidesToShow,
-	      slidesToPreload: this.props.slidesToPreload,
 	      slideCount: this.state.slideCount,
 	      trackStyle: this.state.trackStyle,
 	      variableWidth: this.props.variableWidth,
@@ -451,7 +446,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    if (!this.state.dragging) {
 	      return;
 	    }
-	    if (this.state.animating) {
+	    if (this.props.waitForAnimate && this.state.animating) {
 	      return;
 	    }
 	    if (this.state.vertical) {
@@ -814,18 +809,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      if (this.props.lazyLoad) {
-	        var slidesToLoad = [];
-	        for (var i = targetSlide; i < targetSlide + this.props.slidesToShow + this.props.slidesToPreload; i++) {
-	          var checkSlide = i < 0 ? this.state.slideCount + i : i;
-	          if (this.state.lazyLoadedList.indexOf(checkSlide) < 0) {
-	            slidesToLoad.push(checkSlide);
-	          }
-	        }
-	        if (slidesToLoad.length > 0) {
-	          this.setState({
-	            lazyLoadedList: this.state.lazyLoadedList.concat(slidesToLoad)
-	          });
-	        }
+	        this.updateLazyLoadList(targetSlide);
 	      }
 
 	      _callback2 = function callback() {
@@ -893,18 +877,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    if (this.props.lazyLoad) {
-	      var slidesToLoad = [];
-	      for (var i = targetSlide; i < targetSlide + this.props.slidesToShow + this.props.slidesToPreload; i++) {
-	        var checkSlide = i < 0 ? this.state.slideCount + i : i;
-	        if (this.state.lazyLoadedList.indexOf(checkSlide) < 0) {
-	          slidesToLoad.push(checkSlide);
-	        }
-	      }
-	      if (slidesToLoad.length > 0) {
-	        this.setState({
-	          lazyLoadedList: this.state.lazyLoadedList.concat(slidesToLoad)
-	        });
-	      }
+	      this.updateLazyLoadList(currentSlide);
 	    }
 
 	    // Slide Transition happens here.
@@ -995,6 +968,27 @@ return /******/ (function(modules) { // webpackBootstrap
 	        autoPlayTimer: null
 	      });
 	    }
+	  },
+
+	  updateLazyLoadList: function updateLazyLoadList(index) {
+	    if (this.props.lazyLoad && this.state.lazyLoadedList.indexOf(index) < 0) {
+	      var newLazyLoadedList = Array.from(new Set(this.state.lazyLoadedList.concat(this._getLazyLoadList(index))));
+	      if (newLazyLoadedList !== this.state.lazyLoadedList) {
+	        this.setState({
+	          lazyLoadedList: newLazyLoadedList
+	        });
+	      }
+	    }
+	  },
+
+
+	  _getLazyLoadList: function _getLazyLoadList(currentSlideIndex) {
+	    var lazyLoadedList = [];
+	    var loopIndex = currentSlideIndex + this.props.children.length;
+	    for (var h = loopIndex - this.props.lazyLoadOffset; h <= loopIndex + this.props.lazyLoadOffset; h++) {
+	      lazyLoadedList.push(h % this.props.children.length);
+	    }
+	    return lazyLoadedList;
 	  }
 	};
 
@@ -1389,12 +1383,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    infinite: true,
 	    initialSlide: 0,
 	    lazyLoad: false,
+	    lazyLoadOffset: 0,
 	    pauseOnHover: false,
 	    responsive: null,
 	    rtl: false,
 	    slide: 'div',
 	    slidesToShow: 1,
-	    slidesToPreload: 1,
 	    slidesToScroll: 1,
 	    speed: 500,
 	    swipe: true,

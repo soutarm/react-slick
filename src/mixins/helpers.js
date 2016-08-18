@@ -97,18 +97,7 @@ var helpers = {
       }
 
       if (this.props.lazyLoad) {
-        var slidesToLoad = [];
-        for (var i = targetSlide; i < targetSlide + this.props.slidesToShow + this.props.slidesToPreload; i++ ) {
-          var checkSlide = i < 0 ? this.state.slideCount + i : i;
-          if (this.state.lazyLoadedList.indexOf(checkSlide) < 0) {
-            slidesToLoad.push(checkSlide);
-          }
-        }
-        if (slidesToLoad.length > 0) {
-        this.setState({
-            lazyLoadedList: this.state.lazyLoadedList.concat(slidesToLoad)
-        });
-        }
+        this.updateLazyLoadList(targetSlide);
       }
 
       callback = () => {
@@ -176,18 +165,7 @@ var helpers = {
     }
 
     if (this.props.lazyLoad) {
-      var slidesToLoad = [];
-      for (var i = targetSlide; i < targetSlide + this.props.slidesToShow + this.props.slidesToPreload; i++ ) {
-        var checkSlide = i < 0 ? this.state.slideCount + i : i;
-        if (this.state.lazyLoadedList.indexOf(checkSlide) < 0) {
-          slidesToLoad.push(checkSlide);
-        }
-      }
-      if (slidesToLoad.length > 0) {
-        this.setState({
-          lazyLoadedList: this.state.lazyLoadedList.concat(slidesToLoad)
-        });
-      }
+      this.updateLazyLoadList(currentSlide);
     }
 
     // Slide Transition happens here.
@@ -280,6 +258,26 @@ var helpers = {
         autoPlayTimer: null
       });
     }
+  },
+
+  updateLazyLoadList(index) {
+    if (this.props.lazyLoad && this.state.lazyLoadedList.indexOf(index) < 0) {
+      var newLazyLoadedList = Array.from(new Set(this.state.lazyLoadedList.concat(this._getLazyLoadList(index))));
+      if (newLazyLoadedList !== this.state.lazyLoadedList) {
+        this.setState({
+          lazyLoadedList: newLazyLoadedList
+        });
+      }
+    }
+  },
+
+  _getLazyLoadList: function(currentSlideIndex) {
+    var lazyLoadedList = [];
+    var loopIndex = currentSlideIndex + this.props.children.length;
+    for (var h = loopIndex - this.props.lazyLoadOffset; h <= loopIndex + this.props.lazyLoadOffset; h++) {
+      lazyLoadedList.push(h % this.props.children.length);
+    }
+    return lazyLoadedList;
   }
 };
 

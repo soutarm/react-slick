@@ -68,7 +68,7 @@ var EventHandlers = {
     if (!this.state.dragging) {
       return;
     }
-    if (this.state.animating) {
+    if (this.props.waitForAnimate && this.state.animating) {
       return;
     }
     if (this.state.vertical) {
@@ -113,7 +113,7 @@ var EventHandlers = {
       this.setState({ vertical: true });
       return;
     }
-    
+
     swipeLeft = curLeft + touchSwipeLength * positionOffset;
     this.setState({
       touchObject: touchObject,
