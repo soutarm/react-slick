@@ -1,6 +1,6 @@
 var defaultProps = {
     className: '',
-    // accessibility: true,
+    accessibility: true,
     adaptiveHeight: false,
     arrows: true,
     autoplay: false,
@@ -41,8 +41,7 @@ var defaultProps = {
     swipeEvent: null,
     // nextArrow, prevArrow are react componets
     nextArrow: null,
-    prevArrow: null,
-    preloadContent: null
+    prevArrow: null
 };
 
 module.exports = defaultProps;
