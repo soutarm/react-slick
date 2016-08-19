@@ -77,7 +77,6 @@ var helpers = {
   },
   slideHandler: function (index) {
     // Functionality of animateSlide and postSlide is merged into this function
-    // console.log('slideHandler', index);
     var targetSlide, currentSlide;
     var targetLeft, currentLeft;
     var callback;
