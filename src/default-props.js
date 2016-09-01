@@ -1,6 +1,6 @@
 var defaultProps = {
     className: '',
-    // accessibility: true,
+    accessibility: true,
     adaptiveHeight: false,
     arrows: true,
     autoplay: false,
@@ -18,12 +18,12 @@ var defaultProps = {
     infinite: true,
     initialSlide: 0,
     lazyLoad: false,
+    lazyLoadOffset: 0,
     pauseOnHover: false,
     responsive: null,
     rtl: false,
     slide: 'div',
     slidesToShow: 1,
-    slidesToPreload: 1,
     slidesToScroll: 1,
     speed: 500,
     swipe: true,
@@ -41,8 +41,7 @@ var defaultProps = {
     swipeEvent: null,
     // nextArrow, prevArrow are react componets
     nextArrow: null,
-    prevArrow: null,
-    preloadContent: null
+    prevArrow: null
 };
 
 module.exports = defaultProps;

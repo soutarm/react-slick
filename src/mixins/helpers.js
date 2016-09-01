@@ -2,7 +2,6 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom';
-import ReactTransitionEvents from 'react/lib/ReactTransitionEvents';
 import {getTrackCSS, getTrackLeft, getTrackAnimateCSS} from './trackHelper';
 import assign from 'object-assign';
 
@@ -11,7 +10,7 @@ var helpers = {
     var slideCount = React.Children.count(props.children);
     var listWidth = this.getWidth(ReactDOM.findDOMNode(this.refs.list));
     var trackWidth = this.getWidth(ReactDOM.findDOMNode(this.refs.track));
-    var slideWidth = this.getWidth(ReactDOM.findDOMNode(this))/props.slidesToShow;
+    var slideWidth = trackWidth/props.slidesToShow;
 
     var currentSlide = props.rtl ? slideCount - 1 - props.initialSlide : props.initialSlide;
 
@@ -42,14 +41,16 @@ var helpers = {
     var listWidth = this.getWidth(ReactDOM.findDOMNode(this.refs.list));
     var trackWidth = this.getWidth(ReactDOM.findDOMNode(this.refs.track));
     var slideWidth = this.getWidth(ReactDOM.findDOMNode(this))/props.slidesToShow;
-    var currentSlide = props.rtl ? slideCount - 1 - props.initialSlide : props.initialSlide;
+
+    // pause slider if autoplay is set to false
+    if(!props.autoplay)
+      this.pause();
 
     this.setState({
       slideCount: slideCount,
       slideWidth: slideWidth,
       listWidth: listWidth,
-      trackWidth: trackWidth,
-      currentSlide: currentSlide,
+      trackWidth: trackWidth
     }, function () {
 
       var targetLeft = getTrackLeft(assign({
@@ -87,6 +88,12 @@ var helpers = {
     if (this.props.fade) {
       currentSlide = this.state.currentSlide;
 
+      // Don't change slide if it's not infite and current slide is the first or last slide.
+      if(this.props.infinite === false &&
+        (index < 0 || index >= this.state.slideCount)) {
+        return;
+      }
+
       //  Shifting targetSlide back into the range
       if (index < 0) {
         targetSlide = index + this.state.slideCount;
@@ -96,36 +103,29 @@ var helpers = {
         targetSlide = index;
       }
 
-      if (this.props.lazyLoad) {
-        var slidesToLoad = [];
-        for (var i = targetSlide; i < targetSlide + this.props.slidesToShow + this.props.slidesToPreload; i++ ) {
-          var checkSlide = i < 0 ? this.state.slideCount + i : i;
-          if (this.state.lazyLoadedList.indexOf(checkSlide) < 0) {
-            slidesToLoad.push(checkSlide);
-          }
-        }
-        if (slidesToLoad.length > 0) {
-        this.setState({
-            lazyLoadedList: this.state.lazyLoadedList.concat(slidesToLoad)
-        });
-        }
-      }
+      var updatedLazyLoadedList = this.props.lazyLoad
+        ? this.updateLazyLoadList(index)
+        : this.state.lazyLoadedList;
 
       callback = () => {
+        if (!this.isMounted()) {
+          return;
+        }
         this.setState({
-          animating: false
+          animating: false,
         });
         if (this.props.afterChange) {
           this.props.afterChange(targetSlide);
         }
-        ReactTransitionEvents.removeEndEventListener(ReactDOM.findDOMNode(this.refs.track).children[currentSlide], callback);
+        delete this.animationEndCallback;
       };
 
       this.setState({
         animating: true,
-        currentSlide: targetSlide
+        currentSlide: targetSlide,
+        lazyLoadedList: updatedLazyLoadedList
       }, function () {
-        ReactTransitionEvents.addEndEventListener(ReactDOM.findDOMNode(this.refs.track).children[currentSlide], callback);
+        this.animationEndCallback = setTimeout(callback, this.props.speed);
       });
 
       if (this.props.beforeChange) {
@@ -157,6 +157,11 @@ var helpers = {
       currentSlide = targetSlide;
     }
 
+    // Don't change slide if it's not infite and current slide is the first or last slide page.
+    if(currentSlide === this.state.currentSlide && this.props.infinite === false) {
+      return;
+    }
+
     targetLeft = getTrackLeft(assign({
       slideIndex: targetSlide,
       trackRef: this.refs.track
@@ -175,20 +180,9 @@ var helpers = {
       this.props.beforeChange(this.state.currentSlide, currentSlide);
     }
 
-    if (this.props.lazyLoad) {
-      var slidesToLoad = [];
-      for (var i = targetSlide; i < targetSlide + this.props.slidesToShow + this.props.slidesToPreload; i++ ) {
-        var checkSlide = i < 0 ? this.state.slideCount + i : i;
-        if (this.state.lazyLoadedList.indexOf(checkSlide) < 0) {
-          slidesToLoad.push(checkSlide);
-        }
-      }
-      if (slidesToLoad.length > 0) {
-        this.setState({
-          lazyLoadedList: this.state.lazyLoadedList.concat(slidesToLoad)
-        });
-      }
-    }
+    var updatedLazyLoadedList = this.props.lazyLoad
+      ? this.updateLazyLoadList(index)
+      : this.state.lazyLoadedList;
 
     // Slide Transition happens here.
     // animated transition happens to target Slide and
@@ -199,6 +193,7 @@ var helpers = {
 
       this.setState({
         currentSlide: currentSlide,
+        lazyLoadedList: updatedLazyLoadedList,
         trackStyle: getTrackCSS(assign({left: currentLeft}, this.props, this.state))
       }, function () {
         if (this.props.afterChange) {
@@ -216,19 +211,23 @@ var helpers = {
       };
 
       callback = () => {
+        if (!this.isMounted()) {
+          return;
+        }
         this.setState(nextStateChanges);
         if (this.props.afterChange) {
           this.props.afterChange(currentSlide);
         }
-        ReactTransitionEvents.removeEndEventListener(ReactDOM.findDOMNode(this.refs.track), callback);
+        delete this.animationEndCallback;
       };
 
       this.setState({
         animating: true,
         currentSlide: currentSlide,
+        lazyLoadedList: updatedLazyLoadedList,
         trackStyle: getTrackAnimateCSS(assign({left: targetLeft}, this.props, this.state))
       }, function () {
-        ReactTransitionEvents.addEndEventListener(ReactDOM.findDOMNode(this.refs.track), callback);
+        this.animationEndCallback = setTimeout(callback, this.props.speed);
       });
 
     }
@@ -280,6 +279,28 @@ var helpers = {
         autoPlayTimer: null
       });
     }
+  },
+
+  updateLazyLoadList: function(index) {
+    return Array.from(new Set(this.state.lazyLoadedList.concat(this.getLazyLoadList(index))));
+  },
+
+  setLazyLoadList: function(index) {
+    var newLazyLoadedList = this.updateLazyLoadList(index);
+    if (newLazyLoadedList !== this.state.lazyLoadedList) {
+      this.setState({
+        lazyLoadedList: newLazyLoadedList
+      });
+    }
+  },
+
+  getLazyLoadList: function(currentSlideIndex) {
+    var lazyLoadedList = [];
+    var loopIndex = currentSlideIndex + this.props.children.length;
+    for (var h = loopIndex - this.props.lazyLoadOffset; h <= loopIndex + this.props.lazyLoadOffset; h++) {
+      lazyLoadedList.push(h % this.props.children.length);
+    }
+    return lazyLoadedList;
   }
 };
 
