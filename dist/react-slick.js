@@ -300,14 +300,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 	  render: function render() {
 	    var className = (0, _classnames2.default)('slick-initialized', 'slick-slider', this.props.className);
-
+	    var clickHandler = this.props.onClick ? this.props.onClick : new Function();
 	    var trackProps = {
 	      fade: this.props.fade,
 	      cssEase: this.props.cssEase,
 	      speed: this.props.speed,
 	      infinite: this.props.infinite,
 	      centerMode: this.props.centerMode,
-	      focusOnSelect: this.props.focusOnSelect ? this.selectHandler : new Function(),
+	      focusOnSelect: this.props.focusOnSelect ? this.selectHandler : clickHandler,
 	      currentSlide: this.state.currentSlide,
 	      lazyLoad: this.props.lazyLoad,
 	      lazyLoadedList: this.state.lazyLoadedList,
@@ -847,7 +847,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var _this = this;
 
 	    // Functionality of animateSlide and postSlide is merged into this function
-	    // console.log('slideHandler', index);
 	    var targetSlide, currentSlide;
 	    var targetLeft, currentLeft;
 	    var callback;
